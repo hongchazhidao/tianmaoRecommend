@@ -1,0 +1,5 @@
+dee	hadoop	hello
+hadoop	hive	hello
+hello	dee	hadoop	hive	joe
+hive	hadoop	hello	joe
+joe	hive	hello

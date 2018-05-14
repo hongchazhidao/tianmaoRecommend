@@ -1,0 +1,48 @@
+﻿System.setProperty("HADOOP_USER_NAME", "root");
+
+1、MR执行环境有两种：本地测试环境，服务器环境
+	
+本地测试环境(windows)：
+搭建步骤:
+	1,在windows的hadoop/bin下添加winutils.exe(调试工具)
+	2、在windows下配置hadoop的环境变量  先配HADOOP_HOME 然后再在PATH中添加HADOOP_HOME/bin
+	3、修改hadoop的源码(即在项目的src下添加org.apache.hadoop包去覆盖hadoop源码中一样的包)
+	4、MR调用的代码需要改变：
+		a、src不能有服务器的hadoop配置文件,因为服务器上的hadoop配置文件中写了NN和RM等,如果放在src下,在new  Configuration()会读取这些配置文件,
+		      从而会把任务放到服务器上执行,
+		b、在调用时使用:  即在new  Configuration()下面加上这2行代码,
+			Configuration config = new  Configuration();
+			config.set("fs.defaultFS", "hdfs://node1:8020"); //指定NN的主机名和端口号,之所以要指定是因为虽然现在想在本地执行MR任务,但是输入数据还是在服务器的HDFS上,还需要从HDFS上取数据
+			config.set("yarn.resourcemanager.hostname", "node1"); //指定RM的主机名
+	之后就可以在本地运行main方法本地测试了.
+	(本地测试是用本机线程去执行MR任务,但是输入数据还是从服务器的HDFS上读取,输出数据也是放服务器的HDFS上
+	 本地测试的好处就是可以debug调试)
+	
+	
+	
+服务器环境：
+
+1、直接在服务器上，使用命令的方式调用，执行过程也在服务器上
+	a、把MR程序打包（jar,只需要打包源码src），传送到服务器上(任一节点都可以,因为配置文件一样,集群知道谁是RMA)
+	b、通过命令： hadoop jar jar全名(路径+jar名) 类的全限定名    来执行MR任务
+	
+	
+2、在本地直接调用，执行过程在服务器上（真正企业运行环境） 这种方式是通过程序把本地的jar包提交到服务器上执行,而不是人为的上传
+    a,首先需要在src下放置服务器上的hadoop配置文件(core-site.xml、hdfs-site.xml、yarn-site.xml、mapred-site.xml)
+	b,把MR程序打包（jar,只需要打包源码src），直接放到本地某个位置
+	c、修改hadoop的源码(即在项目的src下添加org.apache.hadoop包去覆盖hadoop源码中一样的包)
+	d、new  Configuration()后面加一句
+	      config.set("mapred.jar", "C:\\Users\\Administrator\\Desktop\\wc.jar");//声明本地jar包位置
+	e、本地执行main方法
+	
+	
+	
+
+a,1   b,1
+a,3   c,3
+a,2   d,2
+
+
+a,3   c,3
+a,2   d,2
+a,1   b,1
